@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 
+import Footer from "./components/Layout/Footer/Footer";
+import Header from "./components/Layout/Header/Header";
 import SiteVersionLogger from "./components/SiteVersionLogger";
 import "./globals.scss";
 import { siteVersion } from "./siteVersion";
@@ -42,7 +44,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           siteName="Next.js Institucional Starter"
           version={siteVersion}
         />
-        {children}
+        <Header />
+        <main>{children}</main>
+        <Footer />
       </body>
     </html>
   );
