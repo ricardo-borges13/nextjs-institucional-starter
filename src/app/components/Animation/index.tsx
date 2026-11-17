@@ -1,11 +1,11 @@
-"use client";
+'use client';
 
-import { motion } from "framer-motion";
-import type { Transition } from "framer-motion";
-import { ReactNode, useSyncExternalStore } from "react";
+import type { Transition } from 'framer-motion';
+import { motion, useReducedMotion } from 'framer-motion';
+import { ReactNode, useSyncExternalStore } from 'react';
 
-import type { AnimationVariant } from "./types";
-import styles from "./Animation.module.scss";
+import styles from './Animation.module.scss';
+import type { AnimationVariant } from './types';
 
 type AnimationProps = {
   children: ReactNode;
@@ -13,29 +13,30 @@ type AnimationProps = {
   delay?: number;
   duration?: number;
   distance?: number;
-  ease?: Transition["ease"];
+  ease?: Transition['ease'];
   className?: string;
   amount?: number;
 };
 
-const MOBILE_MEDIA_QUERY = "(max-width: 768px)";
+const MOBILE_MEDIA_QUERY = '(max-width: 768px)';
 
 const mobileViewportSubscribers = new Set<() => void>();
 let mobileViewportMediaQuery: MediaQueryList | undefined;
 
 const notifyMobileViewportSubscribers = () => {
-  mobileViewportSubscribers.forEach((subscriber) => subscriber());
+  mobileViewportSubscribers.forEach(subscriber => subscriber());
 };
 
 const getMobileViewportMediaQuery = () => {
-  if (typeof window === "undefined") return undefined;
+  if (typeof window === 'undefined') return undefined;
 
   mobileViewportMediaQuery ??= window.matchMedia(MOBILE_MEDIA_QUERY);
 
   return mobileViewportMediaQuery;
 };
 
-const getMobileViewportSnapshot = () => getMobileViewportMediaQuery()?.matches ?? false;
+const getMobileViewportSnapshot = () =>
+  getMobileViewportMediaQuery()?.matches ?? false;
 
 const subscribeToMobileViewport = (subscriber: () => void) => {
   const mediaQuery = getMobileViewportMediaQuery();
@@ -45,50 +46,54 @@ const subscribeToMobileViewport = (subscriber: () => void) => {
   mobileViewportSubscribers.add(subscriber);
 
   if (mobileViewportSubscribers.size === 1) {
-    mediaQuery.addEventListener("change", notifyMobileViewportSubscribers);
+    mediaQuery.addEventListener('change', notifyMobileViewportSubscribers);
   }
 
   return () => {
     mobileViewportSubscribers.delete(subscriber);
 
     if (mobileViewportSubscribers.size === 0) {
-      mediaQuery.removeEventListener("change", notifyMobileViewportSubscribers);
+      mediaQuery.removeEventListener('change', notifyMobileViewportSubscribers);
       mobileViewportMediaQuery = undefined;
     }
   };
 };
 
 const useMobileViewport = () =>
-  useSyncExternalStore(subscribeToMobileViewport, getMobileViewportSnapshot, () => false);
+  useSyncExternalStore(
+    subscribeToMobileViewport,
+    getMobileViewportSnapshot,
+    () => false
+  );
 
 const createVariant = (variant: AnimationVariant, distance?: number) => {
   switch (variant) {
-    case "fade":
+    case 'fade':
       return {
         hidden: { opacity: 0, y: distance ?? 30 },
         visible: { opacity: 1, y: 0 },
       };
-    case "fadeUp":
+    case 'fadeUp':
       return {
         hidden: { opacity: 0, y: distance ?? 40 },
         visible: { opacity: 1, x: 0, y: 0 },
       };
-    case "fadeLeft":
+    case 'fadeLeft':
       return {
         hidden: { opacity: 0, x: -(distance ?? 50) },
         visible: { opacity: 1, x: 0 },
       };
-    case "fadeRight":
+    case 'fadeRight':
       return {
         hidden: { opacity: 0, x: distance ?? 50 },
         visible: { opacity: 1, x: 0 },
       };
-    case "fadeDown":
+    case 'fadeDown':
       return {
         hidden: { opacity: 0, y: -(distance ?? 40) },
         visible: { opacity: 1, y: 0 },
       };
-    case "zoom":
+    case 'zoom':
       return {
         hidden: { opacity: 0, scale: 0.9 },
         visible: { opacity: 1, scale: 1 },
@@ -113,16 +118,20 @@ const MotionAnimation = ({
   fullSize = false,
 }: MotionAnimationProps) => {
   const variants = createVariant(animationVariant, distance);
+  const shouldReduceMotion = useReducedMotion();
 
   return (
     <motion.div
       className={className}
-      style={fullSize ? { width: "100%", height: "100%" } : undefined}
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true, amount }}
+      style={fullSize ? { width: '100%', height: '100%' } : undefined}
+      initial={shouldReduceMotion ? false : 'hidden'}
+      animate={shouldReduceMotion ? 'visible' : undefined}
+      whileInView={shouldReduceMotion ? undefined : 'visible'}
+      viewport={shouldReduceMotion ? undefined : { once: true, amount }}
       variants={variants}
-      transition={{ duration, delay, ease }}
+      transition={
+        shouldReduceMotion ? { duration: 0 } : { duration, delay, ease }
+      }
     >
       {children}
     </motion.div>
@@ -131,10 +140,10 @@ const MotionAnimation = ({
 
 const HorizontalAnimation = (props: AnimationProps) => {
   const isMobile = useMobileViewport();
-  const animationVariant = isMobile ? "fadeUp" : props.variant ?? "fade";
+  const animationVariant = isMobile ? 'fadeUp' : (props.variant ?? 'fade');
 
   return (
-    <div className={`${styles.horizontalAnimation} ${props.className ?? ""}`}>
+    <div className={`${styles.horizontalAnimation} ${props.className ?? ''}`}>
       <MotionAnimation
         {...props}
         className={undefined}
@@ -146,11 +155,16 @@ const HorizontalAnimation = (props: AnimationProps) => {
 };
 
 export const Animation = (props: AnimationProps) => {
-  const { variant = "fade" } = props;
+  const { variant = 'fade' } = props;
 
-  if (variant === "fadeLeft" || variant === "fadeRight") {
+  if (variant === 'fadeLeft' || variant === 'fadeRight') {
     return <HorizontalAnimation {...props} />;
   }
 
-  return <MotionAnimation {...props} animationVariant={variant} />;
+  return (
+    <MotionAnimation
+      {...props}
+      animationVariant={variant}
+    />
+  );
 };

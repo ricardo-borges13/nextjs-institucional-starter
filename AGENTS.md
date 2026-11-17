@@ -28,7 +28,7 @@
 
 ## 3. Estrutura preferencial de diretórios
 
-O agrupamento **`(site)`** é um *route group* do Next.js: organiza o projeto, mas **não** aparece na URL. Não usar `site` sem parênteses quando essa pasta não deve aparecer na rota.
+O agrupamento **`(site)`** é um _route group_ do Next.js: organiza o projeto, mas **não** aparece na URL. Não usar `site` sem parênteses quando essa pasta não deve aparecer na rota.
 
 ```text
 src/
@@ -94,6 +94,7 @@ public/
 ```
 
 **Regras de organização:**
+
 - `src/app/page.tsx` = Home, mantida fina; componentes da Home podem ficar em `src/app/(site)/components/` ou `src/app/components/Home/` se esse padrão for escolhido no início e documentado. Não misture convenções sem necessidade.
 - O que pertence a **uma única página** deve ficar perto dessa rota, preferencialmente em `src/app/(site)/nome-da-rota/components/`.
 - O que é **realmente reutilizável** fica em `src/app/components/`; não promova componentes por antecipação.
@@ -130,13 +131,13 @@ import styles from './Component.module.scss';
 
 Testar visualmente e funcionalmente, quando houver ambiente de navegação:
 
-| Cenário | Viewport de referência |
-|---|---|
-| Desktop amplo | 1920 × 1080 |
-| Desktop médio | 1440 × 900 |
-| Notebook | 1366 × 768 e **1366 × 641** |
-| Tablet | 1024 × 768 e 768 × 1024 |
-| Mobile | 360, 375, 390 e 430 px de largura |
+| Cenário       | Viewport de referência            |
+| ------------- | --------------------------------- |
+| Desktop amplo | 1920 × 1080                       |
+| Desktop médio | 1440 × 900                        |
+| Notebook      | 1366 × 768 e **1366 × 641**       |
+| Tablet        | 1024 × 768 e 768 × 1024           |
+| Mobile        | 360, 375, 390 e 430 px de largura |
 
 - Notebook é cenário prioritário: considere a **altura útil**, não apenas a largura. Compacte seções, CTAs, cards e espaçamentos quando necessário; use media queries por `max-height` se fizer sentido.
 - Nunca introduza rolagem horizontal; menus, modais, cards, grids e carrosséis precisam caber na viewport.
@@ -148,6 +149,7 @@ Testar visualmente e funcionalmente, quando houver ambiente de navegação:
 ## 6. Hero da Home e PageHeroSection das páginas internas
 
 **Diferencie dois usos:**
+
 - `Hero/`: primeira tela da Home, livre para composição comercial específica (CTA, imagem de fundo, parallax opcional).
 - `PageHeroSection/`: componente global e padronizado para páginas internas (título, subtítulo, imagem desktop, imagem mobile, overlay e espaços opcionais).
 
@@ -182,9 +184,11 @@ Testar visualmente e funcionalmente, quando houver ambiente de navegação:
 - Cada rota pública deve possuir conteúdo útil e semântico e **um H1 principal**; hierarquia H2/H3 coerente, `main`, `nav`, `header`, `footer`, labels e links descritivos.
 - Usar `Metadata` / `generateMetadata` nativos: título específico, `description` humana e não duplicada, canonical absoluto e correto, `metadataBase`, Open Graph, Twitter quando fizer sentido, `robots` por ambiente.
 - Centralizar nome, domínio canônico, URL-base, perfil social, defaults e helpers de URL em `src/config/site.ts`.
+- **Indexação segura por padrão:** o starter deve manter `SITE_ENV=staging` e `SITE_INDEXABLE=false`. Só liberar indexação durante a build quando `SITE_ENV=production`, `SITE_INDEXABLE=true` e `SITE_URL` for uma URL HTTPS canônica, oficial e validada. A ausência, invalidez ou divergência de qualquer condição exige `noindex, nofollow` também em `googleBot`; nunca decidir somente por `NODE_ENV`.
+- `src/config/site.ts` é a fonte da política de metadados. Páginas internas devem usar seu helper de metadata para reaplicar a regra de indexação, em vez de definir `robots` isoladamente e correr o risco de sobrescrever a política global.
 - Definir imagem Open Graph própria (referência comum `1200×630`) para Home e páginas principais; não prometer que existe se não foi produzida.
 - Implementar `robots.ts` e `sitemap.ts` e incluir **somente rotas públicas realmente existentes e indexáveis**. Não listar páginas fictícias ou `#` como destino.
-- Homologação/protótipo: `noindex, nofollow` por ambiente e, idealmente, autenticação/controle de acesso; **`robots.txt` sozinho não é proteção de acesso e não garante desindexação**. Para exportação estática, as flags são resolvidas na build; validar HTML gerado e deploy real.
+- Homologação/protótipo: `noindex, nofollow` por ambiente e, idealmente, autenticação/controle de acesso; **`robots.txt` sozinho não é proteção de acesso e não garante desindexação**. Não usar `Disallow: /` no `robots.txt` como substituto de `noindex`, pois isso pode impedir a leitura da diretiva de desindexação. Para exportação estática, as flags são resolvidas na build; validar HTML gerado e deploy real.
 - Produção: remover `noindex` somente após aprovação, revisão de domínio e conteúdo. O projeto não deve deixar homologação indexável por padrão.
 - Usar JSON-LD (`Organization`, `LocalBusiness`, `BreadcrumbList`, `Product`, etc.) **apenas quando dados públicos e verificáveis sustentarem o schema**; não fabricar avaliações, preços, endereço nem disponibilidade.
 - Links internos via `next/link`, URL amigável, navegação funcional e breadcrumbs quando acrescentarem descoberta. Tratar 404 corretamente conforme modalidade de deploy.
@@ -248,6 +252,12 @@ Nome do Site | versão 0.1.0
 - Atualizar `package.json` em mudanças de release conforme escopo (patch/minor/major); manter lockfile consistente. **Não alterar versão a cada pequena edição sem pedido ou convenção de release definida.**
 - Se o log não for desejado em produção, controlar explicitamente por configuração; não emitir logs com dados sensíveis.
 
+## 12.1 Ambiente local, formatação e CI
+
+- `allowedDevOrigins: ["192.168.1.*"]` é permitido exclusivamente para apresentar o projeto pela rede local durante o desenvolvimento; preservar a configuração e documentá-la no README. Não a use como autorização de origem em produção.
+- Preservar a configuração Prettier e `prettier-plugin-organize-imports`. Antes de concluir, executar `npm run format:check`, `npm run lint`, `npm run typecheck` e `npm run build`.
+- O workflow do GitHub Actions deve executar `npm ci`, Prettier, ESLint, TypeScript e a build padrão com uma versão de Node suportada pelo Next.js. Não substituir Turbopack pelo Webpack apenas para ocultar falhas de ambiente.
+
 ## 13. Protótipos comerciais antes da contratação
 
 - Entregar primeiro Home responsiva com Header, Hero, seções essenciais, CTA, Footer e WhatsApp, **sem criar todas as páginas** antes da aprovação.
@@ -279,6 +289,7 @@ Antes de concluir mudanças relevantes:
 - [ ] Configurar `siteVersion.ts`, `SiteVersionLogger` e `package.json`.
 - [ ] Definir art direction de Hero desktop/mobile, LCP e preload correto.
 - [ ] Configurar SEO base, robots, sitemap e `noindex` na homologação.
+- [ ] Preencher `.env.local` com `SITE_ENV`, `SITE_INDEXABLE`, nome, descrição e idioma; liberar `SITE_URL` e indexação somente após aprovação do domínio oficial.
 - [ ] Implementar Header + Hero e aprovar notebook/mobile antes de avançar.
 - [ ] Só criar as demais rotas e formulários após validar a necessidade.
 

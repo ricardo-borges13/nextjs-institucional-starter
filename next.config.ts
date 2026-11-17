@@ -1,5 +1,4 @@
-
-import type { NextConfig } from "next";
+import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   // Validação de rotas com TypeScript
@@ -12,7 +11,7 @@ const nextConfig: NextConfig = {
   poweredByHeader: false,
 
   // Acesso ao ambiente de desenvolvimento pela rede local
-  allowedDevOrigins: ["192.168.1.*"],
+  allowedDevOrigins: ['192.168.1.*'],
 };
 
 export default nextConfig;
